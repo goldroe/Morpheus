@@ -20,5 +20,5 @@ VS_OUTPUT vs_main(float4 in_pos : POSITION) {
 float4 ps_main(VS_OUTPUT input) : SV_TARGET {
     /* float4 diffuse = tex.Sample(sample, input.tex_coord); */
     /* return diffuse; */
-    return float4(1.0f, 0.0f, 0.0f, 1.0f);
+    return float4(0.7f, 0.7f, 0.7f, 1.0f);
 }
