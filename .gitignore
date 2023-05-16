@@ -1,0 +1,7 @@
+*.exe
+*.ilk
+*.lib
+*.vs
+*.pdb
+*.obj
+TAGS
