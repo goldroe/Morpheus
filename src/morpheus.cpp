@@ -87,7 +87,6 @@ OBJ_Model load_obj_model(char *file_name) {
                     v.w = (float)strtod(stream, &stream);
                 }
                 model.vertices.push_back(v);
-                LOG("v: %f %f %f %f", v.x, v.y, v.z, v.w);
             } else if (*stream == 'n') {
                 stream++;
                 double vn0 = 0, vn1 = 0, vn2 = 0;
@@ -97,7 +96,6 @@ OBJ_Model load_obj_model(char *file_name) {
                 vn1 = strtod(stream, &stream);
                 stream++;
                 vn2 = strtod(stream, &stream);
-                LOG("vn: %f %f %f", vn0, vn1, vn2);
             } else if (*stream == 't') {
                 stream++;
                 double vt0 = 0, vt1 = 0, vt2 = 0;
@@ -112,7 +110,6 @@ OBJ_Model load_obj_model(char *file_name) {
                     }
                 }
 
-                LOG("vt: %f %f %f", vt0, vt1, vt2);
             }
         } break;
         case 's':

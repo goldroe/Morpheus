@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <windowsx.h>
 #include <d3d11.h>
 #include <DirectXMath.h>
 using namespace DirectX;
@@ -326,6 +327,12 @@ int main(int argc, char **argv) {
     ID3D11InputLayout *model_layout = nullptr;
     hr = d3d_device->CreateInputLayout(layout_desc, ARRAYSIZE(layout_desc), model_vblob->GetBufferPointer(), model_vblob->GetBufferSize(), &model_layout);
 
+
+    int last_cursor_x = 0;
+    int last_cursor_y = 0;
+    float camera_pitch = 0;
+    float camera_yaw = 0;
+    float camera_radius = 1.0f;    
     
     LARGE_INTEGER start_counter = win32_get_wall_clock();
     LARGE_INTEGER last_counter = start_counter;
@@ -336,9 +343,31 @@ int main(int argc, char **argv) {
                 window_should_close = true;
                 break;
             }
-            
-            TranslateMessage(&message);    
-            DispatchMessageA(&message);
+
+            switch (message.message) {
+            case WM_MOUSEMOVE: {
+                int x = GET_X_LPARAM(message.lParam);
+                int y = GET_Y_LPARAM(message.lParam);
+                if (message.wParam & MK_MBUTTON) {
+                    float pitch = (float)(y - last_cursor_y);
+                    float yaw = (float)(x - last_cursor_x);
+                    camera_pitch += pitch * (XM_PI / 200);
+                    camera_yaw   += yaw * (XM_PI / 200);
+                }
+
+                last_cursor_x = x;
+                last_cursor_y = y;
+            } break;
+                
+            case WM_MOUSEWHEEL: {
+                float delta = (float)GET_WHEEL_DELTA_WPARAM(message.wParam);
+                camera_radius -= 0.005f * delta;
+            } break;
+                
+            default:
+                TranslateMessage(&message);    
+                DispatchMessageA(&message);                
+            }
         }
 
         float global_time = win32_get_seconds_elapsed(start_counter, win32_get_wall_clock());
@@ -355,11 +384,16 @@ int main(int argc, char **argv) {
         rotation = XMMatrixRotationNormal(axis, global_time);
         translation = XMMatrixTranslation(3.0f, 0.0f, 0.0f);
         rotation = XMMatrixRotationAxis(axis, -global_time);
+
+
+        XMMATRIX camera_rotation = XMMatrixRotationQuaternion(XMQuaternionRotationRollPitchYaw(camera_pitch, camera_yaw, 0));
+        XMVECTOR camera_origin = XMVectorSet(0.0f, 1.0f, -1.0f * camera_radius, 1.0f);
+        XMVECTOR camera_pos = XMVector3Transform(camera_origin, camera_rotation);
         
-        XMVECTOR camera_pos = XMVectorSet(1.0f, 3.0f, -5.0f, 0.0f );
-        XMVECTOR camera_target = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+        XMVECTOR camera_target = XMVectorZero();
         XMVECTOR camera_up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
         XMMATRIX view = XMMatrixLookAtLH(camera_pos, camera_target, camera_up);
+        
         XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PI * 0.4, (float)WIDTH/(float)HEIGHT, 1.0f, 1000.0f);
         
 
