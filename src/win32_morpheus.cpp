@@ -289,17 +289,35 @@ int main(int argc, char **argv) {
     }
 
     OBJ_Model model = load_obj_model("untitled.obj");
+    std::vector<float> model_vertices(model.indices.size() * 7);
+
+    // group each face's vertex position and normal, corresponding to the index
+    for (int i = 0; i < model.indices.size(); i++) {
+        uint32 vertex_index = model.indices.at(i);
+        uint32 normal_index = model.normal_indices.at(i);
+        HMM_Vec3 normal = model.normals.at(normal_index);
+        HMM_Vec4 vertex = model.vertices.at(vertex_index);
+
+        model_vertices.at(vertex_index * 7 + 0) = vertex.x;
+        model_vertices.at(vertex_index * 7 + 1) = vertex.y;
+        model_vertices.at(vertex_index * 7 + 2) = vertex.z;
+        model_vertices.at(vertex_index * 7 + 3) = vertex.w;
+
+        model_vertices.at(vertex_index * 7 + 4) = normal.x;
+        model_vertices.at(vertex_index * 7 + 5) = normal.y;
+        model_vertices.at(vertex_index * 7 + 6) = normal.z;
+    }
 
     ID3D11Buffer *model_vbuffer = nullptr;
     {
         D3D11_BUFFER_DESC desc{};
         desc.Usage = D3D11_USAGE_DEFAULT;
-        desc.ByteWidth = (uint32)(model.vertices.size() * sizeof(HMM_Vec4));
+        desc.ByteWidth = (uint32)(model_vertices.size() * sizeof(float));
         desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
         desc.CPUAccessFlags = 0;
         desc.MiscFlags = 0;
         D3D11_SUBRESOURCE_DATA sr_data{};
-        sr_data.pSysMem = &model.vertices[0];
+        sr_data.pSysMem = model_vertices.data();
         hr = d3d_device->CreateBuffer(&desc, &sr_data, &model_vbuffer);
     }
     ID3D11Buffer *model_ibuffer = nullptr;
@@ -317,9 +335,10 @@ int main(int argc, char **argv) {
 
     D3D11_INPUT_ELEMENT_DESC layout_desc[] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
-    UINT model_stride = sizeof(HMM_Vec4);
+    UINT model_stride = 7 * sizeof(float);
     UINT model_offset = 0;
     d3d_context->IASetVertexBuffers(0, 1, &model_vbuffer, &model_stride, &model_offset);
     d3d_context->IASetIndexBuffer(model_ibuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -327,12 +346,11 @@ int main(int argc, char **argv) {
     ID3D11InputLayout *model_layout = nullptr;
     hr = d3d_device->CreateInputLayout(layout_desc, ARRAYSIZE(layout_desc), model_vblob->GetBufferPointer(), model_vblob->GetBufferSize(), &model_layout);
 
-
     int last_cursor_x = 0;
     int last_cursor_y = 0;
     float camera_pitch = 0;
     float camera_yaw = 0;
-    float camera_radius = 1.0f;    
+    float camera_radius = 5.0f;
     
     LARGE_INTEGER start_counter = win32_get_wall_clock();
     LARGE_INTEGER last_counter = start_counter;
@@ -384,7 +402,6 @@ int main(int argc, char **argv) {
         rotation = XMMatrixRotationNormal(axis, global_time);
         translation = XMMatrixTranslation(3.0f, 0.0f, 0.0f);
         rotation = XMMatrixRotationAxis(axis, -global_time);
-
 
         XMMATRIX camera_rotation = XMMatrixRotationQuaternion(XMQuaternionRotationRollPitchYaw(camera_pitch, camera_yaw, 0));
         XMVECTOR camera_origin = XMVectorSet(0.0f, 1.0f, -1.0f * camera_radius, 1.0f);

@@ -70,6 +70,10 @@ OBJ_Model load_obj_model(char *file_name) {
             model.indices.push_back(v0 - 1);
             model.indices.push_back(v1 - 1);
             model.indices.push_back(v2 - 1);
+
+            model.normal_indices.push_back(vn0 - 1);
+            model.normal_indices.push_back(vn1 - 1);
+            model.normal_indices.push_back(vn2 - 1);
         } break;
         case 'v': {
             stream++;
@@ -89,13 +93,15 @@ OBJ_Model load_obj_model(char *file_name) {
                 model.vertices.push_back(v);
             } else if (*stream == 'n') {
                 stream++;
-                double vn0 = 0, vn1 = 0, vn2 = 0;
+                float vn0 = 0, vn1 = 0, vn2 = 0;
                 stream++;
-                vn0 = strtod(stream, &stream);
+                vn0 = (float)strtod(stream, &stream);
                 stream++;
-                vn1 = strtod(stream, &stream);
+                vn1 = (float)strtod(stream, &stream);
                 stream++;
-                vn2 = strtod(stream, &stream);
+                vn2 = (float)strtod(stream, &stream);
+                HMM_Vec3 n = HMM_V3(vn0, vn1, vn2);
+                model.normals.push_back(n);
             } else if (*stream == 't') {
                 stream++;
                 double vt0 = 0, vt1 = 0, vt2 = 0;

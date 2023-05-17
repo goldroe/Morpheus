@@ -7,6 +7,7 @@
 
 struct OBJ_Model {
     std::vector<uint32> indices;
+    std::vector<uint32> normal_indices;
     std::vector<HMM_Vec4> vertices;
     std::vector<HMM_Vec3> normals;
     std::vector<HMM_Vec3> texcoords;
